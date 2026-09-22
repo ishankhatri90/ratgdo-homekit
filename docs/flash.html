@@ -17,6 +17,21 @@
       <h1 id="heading">A smarter garage.<br><span>One USB connection.</span></h1>
       <p class="lead">Install HomeKit firmware on your RATGDO directly from your browser. Connect your board, choose its USB port, and let the installer handle the rest.</p>
       <div class="tags"><span>RATGDO v2.5 series</span><span>ESP8266EX</span><span>1 MB flash</span></div>
+      <section id="homekit" class="pairing" aria-labelledby="pairing-heading" tabindex="-1">
+        <p class="eyebrow">AFTER INSTALL · ADD TO APPLE HOME</p>
+        <h2 id="pairing-heading">Your HomeKit setup code</h2>
+        <p class="pairing-code" aria-label="HomeKit setup code: 2 5 1, 0 2, 0 2 3">251-02-023</p>
+        <p class="helper">Select the code to copy it. Enter the eight digits <strong>25102023</strong> if asked without dashes.</p>
+        <p>This code is built into the ESP8266 firmware offered here. You can pair manually without finding the device’s web page.</p>
+        <ol>
+          <li><strong>Finish Wi-Fi setup</strong><span>Connect RATGDO to your home Wi-Fi in the USB installer. Keep your iPhone or iPad on the same local network.</span></li>
+          <li><strong>Open Apple Home</strong><span>Tap + → Add Accessory → More Options, then select your RATGDO / Garage Door accessory.</span></li>
+          <li><strong>Enter 251-02-023</strong><span>Follow the prompts to finish pairing and choose a room. If Home requests a code, use the eight digits shown above.</span></li>
+        </ol>
+        <details><summary>Prefer to scan a QR code?</summary><p>After Wi-Fi setup, use the device link in the USB installer to open RATGDO’s web interface. An unpaired board displays its own HomeKit QR code. Scan it using Apple Home on another screen.</p><p>The QR code includes a board-specific identifier, so use the one on your device’s page. The manual code above works for this firmware without that QR code.</p></details>
+        <details><summary>RATGDO is missing or already paired</summary><p>Wait for the board to reboot and join Wi-Fi, then retry from the same local network. Avoid an isolated guest network. If it is already paired, remove it from its previous Apple Home before pairing again. The device web interface also offers Reset HomeKit; this removes existing pairing.</p></details>
+        <p class="helper"><a href="https://support.apple.com/guide/iphone/iph125110541/ios">Apple’s accessory setup guide ↗</a></p>
+      </section>
     </section>
     <section class="installer" aria-labelledby="install-heading">
       <div class="card-top"><span class="eyebrow">FIRMWARE INSTALLER</span><span class="version">v2.2.5</span></div>
@@ -25,7 +40,7 @@
       <ol>
         <li><strong>Connect over USB</strong><span>Use a data-capable cable. Close serial monitors and other apps using the board.</span></li>
         <li><strong>Select the board’s serial port</strong><span>Click Connect below and choose your USB serial device, often labeled CH340.</span></li>
-        <li><strong>Install and set up Wi-Fi</strong><span>Keep USB connected until the installer finishes. Follow the setup prompts, then open the device’s web interface to pair with HomeKit.</span></li>
+        <li><strong>Install and set up Wi-Fi</strong><span>Keep USB connected until the installer finishes. Follow the setup prompts, then <a href="#homekit">get your HomeKit setup code</a> to add RATGDO to Apple Home.</span></li>
       </ol>
       <div class="notice"><strong>Changing from a 4 MB layout?</strong> Choose the erase option during installation for a clean setup. Erasing removes saved Wi-Fi settings and HomeKit pairing; you will need to configure them again.</div>
       <esp-web-install-button manifest="manifest-1mb.json">
@@ -36,6 +51,7 @@
       <p class="loading">Loading USB installer… If it does not appear, check your connection or use the firmware download below.</p>
       <noscript><p class="notice">Enable JavaScript to use the USB installer, or download the firmware below.</p></noscript>
       <p class="helper">Desktop Chrome or Edge recommended · USB access requires your permission</p>
+      <a class="pairing-link" href="#homekit">Finished installing? Get your HomeKit code →</a>
       <a class="download" href="firmware/ratgdo-homekit-2.2.5-esp8266-1mb.bin" download>Download the .bin instead ↓</a>
     </section>
     <section class="details" aria-label="Firmware details and help">
