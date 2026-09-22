@@ -57,6 +57,14 @@
       "sha256": "ed65f47b5f03aefdd81adf36ff3c3ea1ca90c5ae0fe4730f66be23740fd220e0"
     }
   ],
-  "upstream_deployment_sha": "fb50a818e480bec7b474e18788f224890d46f517",
+  "verified_build": {
+    "repository": "https://github.com/ratgdo/esphome-ratgdo",
+    "source_commit": "7501d8070826c433aee114bb4c9c2e38195a5342",
+    "actions_run": "https://github.com/ratgdo/esphome-ratgdo/actions/runs/29687380084",
+    "completed_utc": "2026-07-19T12:38:57Z",
+    "esphome_version": "2026.7.0",
+    "container_digest": "sha256:959ef36e5ea97c8309429f0ba1405ddb2eead19019b81e6e9518e683dff5191c",
+    "verification": "Hosted binary SHA-256 values exactly match the official successful build artifacts."
+  },
   "retrieved_utc": "2026-09-22T02:11:06.1310390Z"
 }
