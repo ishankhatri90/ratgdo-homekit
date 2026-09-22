@@ -8,9 +8,10 @@
   <title>RATGDO · HomeKit firmware installer</title>
   <link rel="stylesheet" href="installer.css">
   <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
+  <script src="analytics.js" defer></script>
 </head>
 <body>
-  <header><a class="brand" href="./">RATGDO <span>/ HOMEKIT</span></a><nav class="header-links" aria-label="Site links"><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
+  <header><a class="brand" href="./">RATGDO <span>/ HOMEKIT</span></a><nav class="header-links" aria-label="Site links"><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
   <main>
     <section class="intro" aria-labelledby="heading">
       <p class="eyebrow">THE ORIGINAL BOARD. READY FOR HOMEKIT.</p>
@@ -45,7 +46,7 @@
       </ol>
       <div class="notice"><strong>Changing from a 4 MB layout?</strong> Choose the erase option during installation for a clean setup. Erasing removes saved Wi-Fi settings and HomeKit pairing; you will need to configure them again.</div>
       <esp-web-install-button manifest="manifest-1mb.json">
-        <button slot="activate" type="button">Connect to RATGDO <span aria-hidden="true">→</span></button>
+        <button slot="activate" type="button" data-install-counter="install-homekit-2.2.5-1mb.txt">Connect to RATGDO <span aria-hidden="true">→</span></button>
         <p slot="unsupported" class="notice">USB flashing is unavailable in this browser. Open this page in desktop Chrome or Edge on a computer with a USB port. You can still download the firmware below.</p>
         <p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p>
       </esp-web-install-button>
@@ -53,7 +54,7 @@
       <noscript><p class="notice">Enable JavaScript to use the USB installer, or download the firmware below.</p></noscript>
       <p class="helper">Desktop Chrome or Edge recommended · USB access requires your permission</p>
       <a class="pairing-link" href="#homekit">Finished installing? Get your HomeKit code →</a>
-      <a class="download" href="firmware/ratgdo-homekit-2.2.5-esp8266-1mb.bin" download>Download the .bin instead ↓</a>
+      <a class="download" href="https://github.com/ishankhatri90/ratgdo-homekit/releases/download/v2.2.5-1mb/ratgdo-homekit-2.2.5-esp8266-1mb.bin">Download the .bin instead ↓</a>
       <aside class="license-panel" aria-label="Firmware license and source"><strong>License: GNU GPLv3</strong><span>This download includes a modified RATGDO HomeKit build. The license, complete source, build instructions, attribution, and warranty notice are available on the <a href="legal.html">Licenses &amp; source page</a>.</span></aside>
     </section>
     <section class="details" aria-label="Firmware details and help">

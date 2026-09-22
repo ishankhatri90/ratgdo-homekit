@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Anonymous public install-start and firmware download counts for the RATGDO 1 MB installers.">
+  <title>RATGDO installer · Analytics</title>
+  <link rel="stylesheet" href="installer.css">
+  <script src="analytics.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="./">RATGDO <span>/ ANALYTICS</span></a><nav class="header-links"><a href="legal.html">Licenses &amp; source</a><a href="./">Installer</a></nav></header>
+  <main class="analytics-page" data-analytics-dashboard data-state="loading">
+    <section>
+      <p class="eyebrow">PUBLIC, COOKIE-FREE COUNTS</p>
+      <h1>What people<br><span>choose to install.</span></h1>
+      <p class="lead">These totals use GitHub Release asset counters. This site sets no analytics cookies and creates no visitor profile.</p>
+      <div class="analytics-total"><span><strong data-count="total-attempts">—</strong> web install starts</span><span><strong data-count="total-downloads">—</strong> direct firmware downloads</span></div>
+      <p class="helper" data-analytics-updated>Loading live GitHub totals…</p>
+    </section>
+    <section class="installer analytics-grid" aria-label="Firmware counts">
+      <article class="metric-card"><p class="eyebrow">NATIVE HOMEKIT</p><h2>HomeKit 2.2.5</h2><dl><div><dt>Web install starts</dt><dd data-count="homekit-attempts">—</dd></div><div><dt>Direct .bin downloads</dt><dd data-count="homekit-downloads">—</dd></div></dl><a href="./">Open installer →</a></article>
+      <article class="metric-card"><p class="eyebrow">ESPHOME</p><h2>Security+ 2.0</h2><dl><div><dt>Web install starts</dt><dd data-count="esphome-secplus2-attempts">—</dd></div><div><dt>Direct .bin downloads</dt><dd data-count="esphome-secplus2-downloads">—</dd></div></dl><a href="esphome.html">Open installer →</a></article>
+      <article class="metric-card"><p class="eyebrow">ESPHOME · EXPERIMENTAL</p><h2>Security+ 1.0</h2><dl><div><dt>Web install starts</dt><dd data-count="esphome-secplus1-attempts">—</dd></div><div><dt>Direct .bin downloads</dt><dd data-count="esphome-secplus1-downloads">—</dd></div></dl><a href="esphome.html">Open installer →</a></article>
+    </section>
+    <section class="details analytics-notes">
+      <article><p class="eyebrow">WHAT IS COUNTED</p><h2>Install starts, not completions.</h2><p>A web install start is counted when someone presses an install button. Canceling the serial-port picker, retrying, or starting another flash can add another count. Browser flashing cannot report a verified completion to this static site.</p></article>
+      <article><p class="eyebrow">PRIVACY</p><h2>No tracking profile.</h2><p>The page requests a tiny public GitHub release asset when installation starts. It sends no site-generated identifier, firmware credentials, Wi-Fi details, serial-port information, or HomeKit code. GitHub may retain ordinary server logs under its own privacy policy.</p><p><a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub privacy statement ↗</a></p></article>
+    </section>
+  </main>
+  <footer><span>Counts supplied by the public GitHub Releases API</span><a href="legal.html">License &amp; attribution</a></footer>
+</body>
+</html>

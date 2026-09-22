@@ -8,9 +8,10 @@
   <title>RATGDO · ESPHome firmware installer</title>
   <link rel="stylesheet" href="installer.css">
   <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
+  <script src="analytics.js" defer></script>
 </head>
 <body>
-  <header><a class="brand" href="./">RATGDO <span>/ ESPHOME</span></a><nav class="header-links" aria-label="Site links"><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
+  <header><a class="brand" href="./">RATGDO <span>/ ESPHOME</span></a><nav class="header-links" aria-label="Site links"><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
   <main>
     <section class="intro" aria-labelledby="heading">
       <p class="eyebrow">THE ORIGINAL BOARD. CONNECTED TO HOME ASSISTANT.</p>
@@ -31,12 +32,12 @@
       <p>Connect with a USB data cable, close other serial monitors, then use the matching installer below. Desktop Chrome or Edge recommended.</p>
       <p>These official <strong>v2.5 D1 Mini Lite</strong> builds use the v2.5 pin mapping and 1 MB flash configuration. They are not for RATGDO32, Disco, or v2.0 boards. No encoder configuration is included.</p>
       <article class="protocol-card"><h3>Security+ 2.0</h3><p>Round yellow learn button. Excludes jackshaft models 8500/RJ020 and 8500C/RJ020C; use Security+ 1.0 for those.</p>
-        <esp-web-install-button manifest="manifest-esphome-secplus2.json"><button slot="activate" type="button">Install ESPHome · Security+ 2.0 →</button><p slot="unsupported" class="notice">Use desktop Chrome or Edge for USB flashing, or download the firmware below.</p><p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p></esp-web-install-button>
-        <p class="loading">Loading USB installer… You can also download the firmware below.</p><a class="download" href="firmware/esphome-ratgdo-v25-1mb-secplus2.bin" download>Download Security+ 2.0 .bin · 482,912 bytes ↓</a>
+        <esp-web-install-button manifest="manifest-esphome-secplus2.json"><button slot="activate" type="button" data-install-counter="install-esphome-secplus2-1mb.txt">Install ESPHome · Security+ 2.0 →</button><p slot="unsupported" class="notice">Use desktop Chrome or Edge for USB flashing, or download the firmware below.</p><p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p></esp-web-install-button>
+        <p class="loading">Loading USB installer… You can also download the firmware below.</p><a class="download" href="https://github.com/ishankhatri90/ratgdo-homekit/releases/download/v2.2.5-1mb/esphome-ratgdo-v25-1mb-secplus2.bin">Download Security+ 2.0 .bin · 482,912 bytes ↓</a>
       </article>
       <article class="protocol-card"><h3>Security+ 1.0 <span class="version">Experimental</span></h3><p>Purple, brown, orange, or red learn button; also jackshaft models 8500/RJ020 and 8500C/RJ020C. Upstream labels this support experimental; some openers and wall panels may not work.</p>
-        <esp-web-install-button manifest="manifest-esphome-secplus1.json"><button slot="activate" type="button">Install ESPHome · Security+ 1.0 →</button><p slot="unsupported" class="notice">Use desktop Chrome or Edge for USB flashing, or download the firmware below.</p><p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p></esp-web-install-button>
-        <p class="loading">Loading USB installer… You can also download the firmware below.</p><a class="download" href="firmware/esphome-ratgdo-v25-1mb-secplus1.bin" download>Download Security+ 1.0 .bin · 469,360 bytes ↓</a>
+        <esp-web-install-button manifest="manifest-esphome-secplus1.json"><button slot="activate" type="button" data-install-counter="install-esphome-secplus1-1mb.txt">Install ESPHome · Security+ 1.0 →</button><p slot="unsupported" class="notice">Use desktop Chrome or Edge for USB flashing, or download the firmware below.</p><p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p></esp-web-install-button>
+        <p class="loading">Loading USB installer… You can also download the firmware below.</p><a class="download" href="https://github.com/ishankhatri90/ratgdo-homekit/releases/download/v2.2.5-1mb/esphome-ratgdo-v25-1mb-secplus1.bin">Download Security+ 1.0 .bin · 469,360 bytes ↓</a>
       </article>
       <noscript><p class="notice">Enable JavaScript for USB flashing, or download a binary above.</p></noscript>
       <p class="helper">Dry-contact and encoder builds are not offered here because a matching 1 MB image has not been verified.</p>

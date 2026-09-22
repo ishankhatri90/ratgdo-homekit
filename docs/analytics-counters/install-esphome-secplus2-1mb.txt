@@ -1,0 +1,1 @@
+Anonymous install-start counter for RATGDO ESPHome Security+ 2.0 ESP8266 1 MB.
