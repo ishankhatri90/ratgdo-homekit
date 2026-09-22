@@ -1,1 +1,48 @@
-You probably want <a href="flash.html">the flasher page</a>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Install RATGDO HomeKit 2.2.5 on an original v2.5-series ESP8266 board with 1 MB flash, directly from your browser.">
+  <meta name="color-scheme" content="light dark">
+  <title>RATGDO · HomeKit firmware installer</title>
+  <link rel="stylesheet" href="installer.css">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
+</head>
+<body>
+  <header><a class="brand" href="./">RATGDO <span>/ HOMEKIT</span></a><a href="https://github.com/ishankhatri90/ratgdo-homekit">View source ↗</a></header>
+  <main>
+    <section class="intro" aria-labelledby="heading">
+      <p class="eyebrow">THE ORIGINAL BOARD. READY FOR HOMEKIT.</p>
+      <h1 id="heading">A smarter garage.<br><span>One USB connection.</span></h1>
+      <p class="lead">Install HomeKit firmware on your RATGDO directly from your browser. Connect your board, choose its USB port, and let the installer handle the rest.</p>
+      <div class="tags"><span>RATGDO v2.5 series</span><span>ESP8266EX</span><span>1 MB flash</span></div>
+    </section>
+    <section class="installer" aria-labelledby="install-heading">
+      <div class="card-top"><span class="eyebrow">FIRMWARE INSTALLER</span><span class="version">v2.2.5</span></div>
+      <h2 id="install-heading">Connect. Install. Pair.</h2>
+      <p>For the original RATGDO v2.5-series ESP8266 board with <strong>1 MB (1024 KB)</strong> flash. Not compatible with RATGDO32 or RATGDO32 Disco.</p>
+      <ol>
+        <li><strong>Connect over USB</strong><span>Use a data-capable cable. Close serial monitors and other apps using the board.</span></li>
+        <li><strong>Select the board’s serial port</strong><span>Click Connect below and choose your USB serial device, often labeled CH340.</span></li>
+        <li><strong>Install and set up Wi-Fi</strong><span>Keep USB connected until the installer finishes. Follow the setup prompts, then open the device’s web interface to pair with HomeKit.</span></li>
+      </ol>
+      <div class="notice"><strong>Changing from a 4 MB layout?</strong> Choose the erase option during installation for a clean setup. Erasing removes saved Wi-Fi settings and HomeKit pairing; you will need to configure them again.</div>
+      <esp-web-install-button manifest="manifest-1mb.json">
+        <button slot="activate" type="button">Connect to RATGDO <span aria-hidden="true">→</span></button>
+        <p slot="unsupported" class="notice">USB flashing is unavailable in this browser. Open this page in desktop Chrome or Edge on a computer with a USB port. You can still download the firmware below.</p>
+        <p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p>
+      </esp-web-install-button>
+      <p class="loading">Loading USB installer… If it does not appear, check your connection or use the firmware download below.</p>
+      <noscript><p class="notice">Enable JavaScript to use the USB installer, or download the firmware below.</p></noscript>
+      <p class="helper">Desktop Chrome or Edge recommended · USB access requires your permission</p>
+      <a class="download" href="firmware/ratgdo-homekit-2.2.5-esp8266-1mb.bin" download>Download the .bin instead ↓</a>
+    </section>
+    <section class="details" aria-label="Firmware details and help">
+      <article><p class="eyebrow">BUILT FOR 1 MB</p><h2>The right fit for your board.</h2><p>This build uses a 1 MB flash layout with 64 KB reserved for LittleFS. The exact binary has been flashed over USB and verified by esptool.</p><dl><div><dt>Firmware</dt><dd>HomeKit 2.2.5</dd></div><div><dt>Binary size</dt><dd>800,656 bytes</dd></div><div><dt>Chip family</dt><dd>ESP8266</dd></div></dl><details><summary>SHA-256 checksum</summary><code>3caf757b05084d903917632bf4a76868b1345cb6ab8e8542fde2b7db3e6959ea</code></details></article>
+      <article><p class="eyebrow">NEED A HAND?</p><h2>Connection checklist.</h2><details><summary>The board is missing from the port list</summary><p>Try another USB data cable and a direct USB port. CH340 boards may need the <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html">manufacturer’s Windows driver</a>.</p></details><details><summary>The port is busy or connection fails</summary><p>Close PlatformIO’s serial monitor, Arduino IDE serial monitors, and other browser tabs connected to the board. Unplug and reconnect USB, then try again.</p></details><details><summary>Can this identify my exact board model?</summary><p>The installer checks the ESP chip family, but cannot confirm the RATGDO board revision or wiring. Check that your board is an original v2.5-series ESP8266 model with 1 MB flash before installing.</p></details><p><a href="https://github.com/ishankhatri90/ratgdo-homekit/releases/tag/v2.2.5-1mb">Release notes and source code ↗</a></p></article>
+    </section>
+  </main>
+  <footer><span>Community firmware build · GPLv3</span><span>USB installer powered by <a href="https://esphome.github.io/esp-web-tools/">ESP Web Tools</a></span></footer>
+</body>
+</html>

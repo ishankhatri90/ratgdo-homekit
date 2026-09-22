@@ -1,0 +1,7 @@
+{
+  "name": "RATGDO HomeKit (ESP8266 1 MB)",
+  "version": "2.2.5",
+  "new_install_prompt_erase": true,
+  "new_install_improv_wait_time": 60,
+  "builds": [{"chipFamily": "ESP8266", "parts": [{"path": "firmware/ratgdo-homekit-2.2.5-esp8266-1mb.bin", "offset": 0}]}]
+}
