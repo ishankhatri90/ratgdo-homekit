@@ -1,0 +1,62 @@
+{
+  "firmwares": [
+    {
+      "manifest_url": "https://ratgdo.github.io/esphome-ratgdo/v25board_esp8266_d1_mini_lite-manifest.json",
+      "upstream_manifest": {
+        "name": "V2.5 Board ESP8266 D1 Mini Lite Security+ 2.0",
+        "new_install_improv_wait_time": 15,
+        "new_install_prompt_erase": true,
+        "version": "",
+        "home_assistant_domain": "esphome",
+        "new_install_skip_erase": false,
+        "builds": [
+          {
+            "chipFamily": "ESP8266",
+            "ota": {
+              "path": "v25board-esp8266-d1-mini-lite-esp8266.ota.bin",
+              "md5": "ec20483f0e9861d8f3cd64c587d192f7"
+            },
+            "parts": [
+              {
+                "path": "v25board-esp8266-d1-mini-lite-esp8266.factory.bin",
+                "offset": 0
+              }
+            ]
+          }
+        ]
+      },
+      "bytes": 482912,
+      "sha256": "4cc60ec91196db5c1b71bfcf6ce38371fd015ea3ce23f10ebcf2283c5ac4e3c1"
+    },
+    {
+      "manifest_url": "https://ratgdo.github.io/esphome-ratgdo/v25board_esp8266_d1_mini_lite_secplusv1-manifest.json",
+      "upstream_manifest": {
+        "name": "V2.5 Board ESP8266 D1 Mini Lite Security+ 1.0",
+        "new_install_improv_wait_time": 15,
+        "new_install_prompt_erase": true,
+        "version": "",
+        "home_assistant_domain": "esphome",
+        "new_install_skip_erase": false,
+        "builds": [
+          {
+            "chipFamily": "ESP8266",
+            "ota": {
+              "path": "v25board-esp8266-d1-mini-lite-secplusv1-esp8266.ota.bin",
+              "md5": "2d80cfa4d991a12572d72e58b60450f5"
+            },
+            "parts": [
+              {
+                "path": "v25board-esp8266-d1-mini-lite-secplusv1-esp8266.factory.bin",
+                "offset": 0
+              }
+            ]
+          }
+        ]
+      },
+      "bytes": 469360,
+      "sha256": "ed65f47b5f03aefdd81adf36ff3c3ea1ca90c5ae0fe4730f66be23740fd220e0"
+    }
+  ],
+  "upstream_deployment_sha": "fb50a818e480bec7b474e18788f224890d46f517",
+  "retrieved_utc": "2026-09-22T02:11:06.1310390Z"
+}
