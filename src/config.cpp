@@ -1,0 +1,1133 @@
+/****************************************************************************
+ * RATGDO HomeKit
+ * https://ratcloud.llc
+ * https://github.com/PaulWieland/ratgdo
+ *
+ * Copyright (c) 2023-26 David A Kerr... https://github.com/dkerr64/
+ * All Rights Reserved.
+ * Licensed under terms of the GPL-3.0 License.
+ *
+ * Contributions acknowledged from
+ * Brandon Matthews... https://github.com/thenewwazoo
+ * Jonathan Stroud...  https://github.com/jgstroud
+ *
+ */
+
+// ESP system files
+#ifdef ESP8266
+#include <LittleFS.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#else
+#include <nvs_flash.h>
+#include <nvs.h>
+#include <ESPmDNS.h>
+#endif
+
+// RATGDO project includes
+#include "ratgdo.h"
+#include "config.h"
+#include "utilities.h"
+#include "comms.h"
+#include "led.h"
+#include "homekit.h"
+#include "provision.h"
+#ifdef RATGDO32_DISCO
+#include "vehicle.h"
+#endif // RATGDO32_DISCO
+#ifdef USE_GDOLIB
+#include "gdo.h"
+#endif // USE_GDOLIB
+
+// Logger tag
+static const char *TAG = "ratgdo-config";
+
+char default_device_name[DEVICE_NAME_SIZE] = "";
+#ifndef ESP8266
+// on ESP8266 these are defined in homekit_decl.c
+char device_name[DEVICE_NAME_SIZE] = "";
+char device_name_rfc952[DEVICE_NAME_SIZE] = "";
+#endif
+
+// Construct the singleton tasks for user config
+userSettings *userSettings::instancePtr = new userSettings();
+userSettings *userConfig = userSettings::getInstance();
+#ifndef ESP8266
+nvRamClass *nvRamClass::instancePtr = new nvRamClass();
+nvRamClass *nvRam = nvRamClass::getInstance();
+#endif
+
+// Forward declarations of helper functions for config settings
+bool setDeviceName(const std::string &key, const char *name, configSetting *action);
+bool helperWiFiPower(const std::string &key, const char *value, configSetting *action);
+bool helperWiFiPhyMode(const std::string &key, const char *value, configSetting *action);
+bool helperGDOSecurityType(const std::string &key, const char *value, configSetting *action);
+bool helperLEDidle(const std::string &key, const char *value, configSetting *action);
+bool helperMotionTriggers(const std::string &key, const char *value, configSetting *action);
+bool helperNTPServer(const std::string &key, const char *value, configSetting *action);
+bool helperTimeZone(const std::string &key, const char *value, configSetting *action);
+bool helperSyslogEn(const std::string &key, const char *value, configSetting *action);
+bool helperSyslogPort(const std::string &key, const char *value, configSetting *action);
+bool helperSyslogFacility(const std::string &key, const char *value, configSetting *action);
+bool helperLogLevel(const std::string &key, const char *value, configSetting *action);
+bool helperBuiltInTTC(const std::string &key, const char *value, configSetting *action);
+#ifdef RATGDO32_DISCO
+bool helperVehicleThreshold(const std::string &key, const char *value, configSetting *action);
+bool helperVehicleHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperVehicleOccupancyHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperVehicleArrivingHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperVehicleDepartingHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperLaser(const std::string &key, const char *value, configSetting *action);
+#endif
+#ifndef ESP8266
+bool helperOccupancyDuration(const std::string &key, const char *value, configSetting *action);
+bool helperHomeSpanCLI(const std::string &key, const char *value, configSetting *action);
+bool helperLightHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperMotionHomeKit(const std::string &key, const char *value, configSetting *action);
+bool helperStopDoorHomeKit(const std::string &key, const char *value, configSetting *action);
+#endif
+
+#ifdef ESP8266
+static inline bool isPROGMEM(const void *ptr)
+{
+    // PROGMEM addresses are in the 0x40200000 range
+    return ((uint32_t)ptr >= 0x40200000 && (uint32_t)ptr < 0x40300000);
+}
+#endif
+static char localIPBuf[IP4ADDR_STRLEN_MAX] PROGMEM = "0.0.0.0";
+static char subnetMaskBuf[IP4ADDR_STRLEN_MAX] PROGMEM = "0.0.0.0";
+static char gatewayIPBuf[IP4ADDR_STRLEN_MAX] PROGMEM = "0.0.0.0";
+static char nameserverIPBuf[IP4ADDR_STRLEN_MAX] PROGMEM = "0.0.0.0";
+static char syslogIPBuf[IP4ADDR_STRLEN_MAX] PROGMEM = "0.0.0.0";
+static char timezoneBuf[64] PROGMEM = "";
+static char ntpServerBuf[64] PROGMEM = "pool.ntp.org";
+static char usernameBuf[32] PROGMEM = "admin";
+static char credentialsBuf[36] PROGMEM = "10d3c00fa1e09696601ef113b99f8a87"; // MD5 hash of "admin:ratgdo:password"
+
+//  key, reboot, wifiChanged, value, fn_to_call
+static configSetting settings_defaults[] PROGMEM = {
+    {cfg_deviceName, false, false, (configStr){DEVICE_NAME_SIZE, default_device_name}, setDeviceName}, // call fn to set global
+    {cfg_wifiChanged, true, true, false, NULL},
+    {cfg_wifiPower, true, true, WIFI_POWER_MAX, helperWiFiPower}, // call fn to set reboot only if setting changed
+    {cfg_wifiPhyMode, true, true, 0, helperWiFiPhyMode},          // call fn to set reboot only if setting changed
+    {cfg_staticIP, true, true, false, NULL},
+    {cfg_localIP, true, true, (configStr){sizeof(localIPBuf), localIPBuf}, NULL},
+    {cfg_subnetMask, true, true, (configStr){sizeof(subnetMaskBuf), subnetMaskBuf}, NULL},
+    {cfg_gatewayIP, true, true, (configStr){sizeof(gatewayIPBuf), gatewayIPBuf}, NULL},
+    {cfg_nameserverIP, true, true, (configStr){sizeof(nameserverIPBuf), nameserverIPBuf}, NULL},
+    {cfg_passwordRequired, false, false, false, NULL},
+    {cfg_wwwUsername, false, false, (configStr){sizeof(usernameBuf), usernameBuf}, NULL},
+    //  Credentials are MD5 Hash... server.credentialHash(username, realm, "password");
+    {cfg_wwwCredentials, false, false, (configStr){sizeof(credentialsBuf), credentialsBuf}, NULL},
+    {cfg_GDOSecurityType, true, false, 2, helperGDOSecurityType}, // call fn to reset door
+    {cfg_TTCseconds, false, false, 5, NULL},
+    {cfg_TTClight, false, false, true, NULL},
+    {cfg_rebootSeconds, true, true, 0, NULL},
+    {cfg_LEDidle, false, false, 0, helperLEDidle},               // call fn to set LED object
+    {cfg_motionTriggers, false, false, 0, helperMotionTriggers}, // call fn to enable HomeSpan service
+    {cfg_enableNTP, true, false, false, NULL},
+    {cfg_ntpServer, false, false, (configStr){sizeof(ntpServerBuf), ntpServerBuf}, helperNTPServer}, // call fn to re-sync time with new NTP server
+    {cfg_doorUpdateAt, false, false, 0, NULL},
+    {cfg_doorOpenAt, false, false, 0, NULL},
+    {cfg_doorCloseAt, false, false, 0, NULL},
+    // Will contain string of region/city and POSIX code separated by semicolon...
+    // For example... "America/New_York;EST5EDT,M3.2.0,M11.1.0"
+    // Current maximum string length is known to be 60 chars (+ null terminator), see JavaScript console log.
+    {cfg_timeZone, false, false, (configStr){sizeof(timezoneBuf), timezoneBuf}, helperTimeZone}, // call fn to set system time zone
+    {cfg_softAPmode, true, false, false, NULL},
+    {cfg_syslogEn, false, false, false, helperSyslogEn}, // call fn to set globals
+    {cfg_syslogIP, false, false, (configStr){sizeof(syslogIPBuf), syslogIPBuf}, NULL},
+    {cfg_syslogPort, false, false, 514, helperSyslogPort},                   // call fn to set global
+    {cfg_syslogFacility, false, false, SYSLOG_LOCAL0, helperSyslogFacility}, // call fn to set global
+    {cfg_logLevel, false, false, ESP_LOG_INFO, helperLogLevel},              // call fn to set log level
+    {cfg_dcOpenClose, true, false, false, NULL},
+    {cfg_dcBypassTTC, false, false, false, NULL},
+    {cfg_useToggle, false, false, false, NULL},
+    {cfg_dcDebounceDuration, true, false, 50, NULL},
+    {cfg_obstFromStatus, true, false, false, NULL},
+#ifdef WALLPANEL_DISCONNECT_ON_TX    
+    {cfg_wpDisconnectOnTx, true, false, true, NULL},
+#else
+    {cfg_wpDisconnectOnTx, true, false, false, NULL},
+#endif
+#ifdef RATGDO32_DISCO
+    {cfg_vehicleThreshold, false, false, 100, helperVehicleThreshold},                // call fn to set globals
+    {cfg_vehicleHomeKit, false, false, false, helperVehicleHomeKit},                  // call fn to enable/disable HomeKit accessories
+    {cfg_vehicleOccupancyHomeKit, false, false, true, helperVehicleOccupancyHomeKit}, // granular control for occupancy sensor
+    {cfg_vehicleArrivingHomeKit, false, false, true, helperVehicleArrivingHomeKit},   // granular control for arriving motion sensor
+    {cfg_vehicleDepartingHomeKit, false, false, true, helperVehicleDepartingHomeKit}, // granular control for departing motion sensor
+    {cfg_laserEnabled, false, false, false, helperLaser},
+    {cfg_laserHomeKit, false, false, true, helperLaser}, // call fn to enable/disable HomeKit accessories
+    {cfg_laserOnDoorOpen, false, false, false, NULL},
+    {cfg_assistDuration, false, false, 60, NULL},
+    {cfg_TTCsound, false, false, true, NULL},
+#endif
+#ifdef USE_GDOLIB
+    {cfg_useSWserial, true, false, true, helperUseSWserial}, // call fn to shut down GDO before switch
+#endif
+    {cfg_builtInTTC, false, false, 0, helperBuiltInTTC},
+    {cfg_reverseOnStop, false, false, true, NULL},
+#ifdef RATGDO_ENCODER
+    {cfg_encoderEnabled, true, false, false, NULL},  // reboot required to set up encoder ISR
+    {cfg_encoderReversed, true, false, false, NULL}, // reboot required to reverse encoder direction
+#endif
+#ifndef ESP8266
+    // These features not available on ESP8266
+    {cfg_occupancyDuration, false, false, 0, helperOccupancyDuration}, // call fn to enable/disable HomeKit accessories
+    {cfg_enableIPv6, true, false, false, NULL},
+    {cfg_homespanCLI, false, false, false, helperHomeSpanCLI},         // call fn to enable/disable HomeSpan CLI and Improv
+    {cfg_lightHomeKit, false, false, true, helperLightHomeKit},        // call fn to enable/disable HomeKit light accessory (default: enabled)
+    {cfg_motionHomeKit, false, false, true, helperMotionHomeKit},      // call fn to enable/disable HomeKit motion accessory (default: enabled)
+    {cfg_stopDoorHomeKit, false, false, false, helperStopDoorHomeKit}, // call fn to enable/disable HomeKit stop accessory (default: disabled)
+#else
+    // HomeKit services are static on ESP8266, so a reboot is required to add/remove the light.
+    {cfg_lightHomeKit, true, false, true, NULL},
+#endif
+};
+// Number of settings, calculated at compile time
+static const size_t nSettings = sizeof(settings_defaults) / sizeof(settings_defaults[0]);
+
+#ifdef ESP8266
+// ESP8266 is single core / single threaded, no mutex's.
+#define TAKE_MUTEX()
+#define GIVE_MUTEX()
+#else
+// ESP32 is multi-core, need to serialize access to JSON buffers
+#define TAKE_MUTEX() xSemaphoreTake(mutex, portMAX_DELAY)
+#define GIVE_MUTEX() xSemaphoreGive(mutex)
+#endif
+
+bool setDeviceName(const std::string &key, const char *name, configSetting *action)
+{
+    // Check we have a legal device name...
+    make_rfc952(device_name_rfc952, name, sizeof(device_name_rfc952));
+    if (strlen(device_name_rfc952) == 0)
+    {
+        // cannot have a empty device name, reset to default...
+        strlcpy(device_name, default_device_name, sizeof(device_name));
+        make_rfc952(device_name_rfc952, default_device_name, sizeof(device_name_rfc952));
+        userConfig->set(key, default_device_name);
+    }
+    else
+    {
+        // device name okay, copy it to our global
+        strlcpy(device_name, name, sizeof(device_name));
+        userConfig->set(key, device_name);
+    }
+    WiFi.hostname(device_name_rfc952);
+#ifdef ESP8266
+    MDNS.setHostname(device_name_rfc952);
+#else
+    MDNS.begin(device_name_rfc952);
+    MDNS.setInstanceName(device_name);
+#endif
+    return true;
+}
+
+bool helperWiFiPower(const std::string &key, const char *value, configSetting *action)
+{
+    // Only reboot if value has changed
+    if (std::get<int>(action->value) != std::stoi(value))
+    {
+        ESP_LOGI(TAG, "Setting WiFi power to: %s", value);
+        userConfig->set(key, value);
+        action->reboot = true;
+    }
+    else
+    {
+        ESP_LOGI(TAG, "WiFi power unchanged at: %s", value);
+        action->reboot = false;
+    }
+    return true;
+}
+
+bool helperWiFiPhyMode(const std::string &key, const char *value, configSetting *action)
+{
+    // Only reboot if value has changed
+    if (std::get<int>(action->value) != std::stoi(value))
+    {
+        ESP_LOGI(TAG, "Setting WiFi mode to: %s", value);
+        userConfig->set(key, value);
+        action->reboot = true;
+    }
+    else
+    {
+        ESP_LOGI(TAG, "WiFi mode unchanged at: %s", value);
+        action->reboot = false;
+    }
+    return true;
+}
+
+bool helperGDOSecurityType(const std::string &key, const char *value, configSetting *action)
+{
+    // Call fn to reset door
+    userConfig->set(key, value);
+#ifdef ESP8266
+    action->reboot = true;
+#else
+    reset_door();
+#endif
+    return true;
+}
+
+bool helperLEDidle(const std::string &key, const char *value, configSetting *action)
+{
+    // call fn to set LED object
+    userConfig->set(key, value);
+    led.setIdleState(userConfig->getLEDidle());
+    led.idle();
+    return true;
+}
+
+bool helperMotionTriggers(const std::string &key, const char *value, configSetting *action)
+{
+    uint8_t triggers = (uint8_t)std::stoi(value);
+    // Only reboot if need for motion sensor accessory changes...
+    // action->reboot = (((triggers == 0) && (motionTriggers.asInt != 0)) || ((triggers != 0) && (motionTriggers.asInt == 0)));
+    motionTriggers.asInt = triggers;
+    userConfig->set(cfg_motionTriggers, motionTriggers.asInt);
+    // enable HomeKit motion service (in case not already done);
+#ifndef ESP8266 // TODO - make work for ESP8266
+    if (triggers)
+    {
+        enable_service_homekit_motion(false);
+    }
+#endif // ESP32
+    return true;
+}
+
+// Helper function to apply timezone configuration with NTP server
+// Reduces code duplication between helperNTPServer, helperTimeZone, and load_all_config_settings
+void applyTimezoneWithNTP(const char *ntpServer)
+{
+    std::string tz = userConfig->getTimeZone();
+    size_t pos = tz.find(';');
+    if (pos != std::string::npos)
+    {
+        // semicolon may separate continent/city from posix TZ string
+        ESP_LOGI(TAG, "Apply timezone: %s with NTP server: %s", tz.substr(pos + 1).c_str(), ntpServer);
+        configTzTime(tz.substr(pos + 1).c_str(), ntpServer);
+    }
+    else
+    {
+        // if no semicolon then no POSIX code, so use UTC
+        ESP_LOGI(TAG, "Apply timezone: UTC0 with NTP server: %s", ntpServer);
+        configTzTime("UTC0", ntpServer);
+    }
+}
+
+bool helperNTPServer(const std::string &key, const char *value, configSetting *action)
+{
+    // Validate that NTP server is not empty or whitespace only
+    if (value == nullptr || strlen(value) == 0 || strspn(value, " \t\r\n") == strlen(value))
+    {
+        ESP_LOGW(TAG, "Invalid NTP server value, defaulting to pool.ntp.org");
+        value = "pool.ntp.org";
+    }
+    userConfig->set(key, value);
+
+    // Re-apply the current timezone with the new NTP server if NTP is enabled
+    if (userConfig->getEnableNTP())
+    {
+        applyTimezoneWithNTP(value);
+        ESP_LOGI(TAG, "Local time: %s", timeString());
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Set NTP server: %s (NTP disabled, no time sync)", value);
+    }
+    return true;
+}
+
+bool helperTimeZone(const std::string &key, const char *value, configSetting *action)
+{
+    // Validate that timezone value does not contain whitespace or line breaks
+    if (value == nullptr || strlen(value) == 0 || strpbrk(value, " \t\r\n"))
+    {
+        ESP_LOGW(TAG, "Invalid timezone value [%s], ignoring change", value);
+    }
+    else
+    {
+        userConfig->set(key, value);
+        applyTimezoneWithNTP(userConfig->getNTPServer());
+        ESP_LOGI(TAG, "Local time: %s", timeString());
+    }
+    return true;
+}
+
+bool helperSyslogEn(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    // these globals are set to optimize log message handling...
+    strlcpy(syslogIP, userConfig->getSyslogIP(), sizeof(syslogIP));
+    syslogPort = userConfig->getSyslogPort();
+    syslogEn = userConfig->getSyslogEn();
+    syslogFacility = userConfig->getSyslogFacility();
+    return true;
+}
+
+bool helperSyslogFacility(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    syslogFacility = userConfig->getSyslogFacility();
+    return true;
+}
+
+bool helperSyslogPort(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    syslogPort = userConfig->getSyslogPort();
+    return true;
+}
+
+bool helperLogLevel(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+#ifdef ESP32
+    esp_log_level_set("*", (esp_log_level_t)userConfig->getLogLevel());
+#else
+    logLevel = (esp_log_level_t)userConfig->getLogLevel();
+#endif // !ESP32
+    return true;
+}
+
+bool helperBuiltInTTC(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    garage_door.builtInTTC = userConfig->getBuiltInTTC();
+#ifdef USE_GDOLIB
+    if (!userConfig->getBuiltInTTC())
+    {
+        // We have just disabled use of GDO's built-in time-to-close.
+        ESP_LOGI(TAG, "Disable built-in TTC, set to: %d", userConfig->getTTCseconds() < 60 ? 0 : userConfig->getTTCseconds());
+        gdo_set_time_to_close(userConfig->getTTCseconds() < 60 ? 0 : userConfig->getTTCseconds());
+    }
+#else
+    if (garage_door.builtInTTC == 0)
+    {
+        send_cancel_ttc();
+    }
+    else
+    {
+        send_set_ttc(garage_door.builtInTTC);
+    }
+#endif // USE_GDOLIB
+    return true;
+}
+
+#ifdef RATGDO32_DISCO
+bool helperVehicleThreshold(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    // set globals so takes effect immediately
+    vehicleThresholdDistance = (uint32_t)std::stoi(value) * 10; // convert centimeters to millimeters
+    return true;
+}
+
+bool helperVehicleHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_vehicle(userConfig->getVehicleHomeKit());
+    return true;
+}
+
+bool helperVehicleOccupancyHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_vehicle(userConfig->getVehicleHomeKit());
+    return true;
+}
+
+bool helperVehicleArrivingHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_vehicle(userConfig->getVehicleHomeKit());
+    return true;
+}
+
+bool helperVehicleDepartingHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_vehicle(userConfig->getVehicleHomeKit());
+    return true;
+}
+
+bool helperLaser(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_laser(userConfig->getLaserEnabled() && userConfig->getLaserHomeKit());
+    return true;
+}
+#endif
+
+#ifdef USE_GDOLIB
+bool helperUseSWserial(const std::string &key, const char *value, configSetting *action)
+{
+    // We must shutdown the GDOLIB tasks before changing the useSWserial setting.
+    gdo_deinit();
+    userConfig->set(key, value);
+    return true;
+}
+#endif
+
+#ifdef ESP32
+bool helperStopDoorHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_stop(userConfig->getStopDoorHomeKit());
+    return true;
+}
+
+bool helperOccupancyDuration(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_room_occupancy(userConfig->getOccupancyDuration() > 0);
+    return true;
+}
+
+bool helperHomeSpanCLI(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    if (userConfig->getEnableHomeSpanCLI())
+        disable_improv();
+    else
+        setup_improv();
+    return true;
+}
+
+// Forward declarations for HomeKit accessory enable/disable functions
+extern bool enable_service_homekit_light(bool enable);
+extern bool enable_service_homekit_motion_sensor(bool enable);
+
+bool helperLightHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_light(userConfig->getLightHomeKit());
+    return true;
+}
+
+bool helperMotionHomeKit(const std::string &key, const char *value, configSetting *action)
+{
+    userConfig->set(key, value);
+    enable_service_homekit_motion_sensor(userConfig->getMotionHomeKit());
+    return true;
+}
+#endif // ESP32
+
+/****************************************************************************
+ * User settings class
+ */
+userSettings::userSettings()
+{
+#ifdef ESP8266
+    LittleFS.begin();
+    snprintf_P(default_device_name, sizeof(default_device_name), PSTR("Garage Door %06X"), ESP.getChipId());
+#else
+    mutex = xSemaphoreCreateMutex(); // need to serialize set's
+    uint8_t mac[6];
+    Network.macAddress(mac);
+    snprintf(default_device_name, sizeof(default_device_name), "Garage Door %02X%02X%02X", mac[3], mac[4], mac[5]);
+#endif
+    strlcpy(device_name, default_device_name, sizeof(device_name));
+    make_rfc952(device_name_rfc952, default_device_name, sizeof(device_name_rfc952));
+    IRAM_START(TAG);
+#ifdef ESP8266
+    // On ESP8266 we have defined the default settings in PROGMEM.  This saves a significant amount of RAM,
+    // but it is read-only.  Therefore we need to copy the settings to RAM at runtime.  But, we will use
+    // IRAM_HEAP instead of normal RAM so that we maximize the amount of normal RAM available for other tasks.
+    // This is important because the ESP8266 has very limited RAM.
+    settings = (configSetting *)malloc(sizeof(settings_defaults));
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        *p = settings_defaults[i];
+        configStr *strVal = std::get_if<configStr>(&p->value);
+        if (strVal && isPROGMEM(strVal->str))
+        {
+            // Copy string from PROGMEM to RAM buffer
+            char *buf = (char *)malloc(strVal->max);
+            memcpy_P(buf, strVal->str, strVal->max);
+            // Update the pointer in the configStr to point to the IRAM buffer
+            strVal->str = buf;
+        }
+    }
+#else
+    // on ESP32 we can use the array directly, no need to copy to IRAM_HEAP, because PROGMEM is a no-op.
+    settings = settings_defaults;
+#endif
+    IRAM_END(TAG);
+}
+
+void userSettings::toStdOut()
+{
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        if (std::holds_alternative<configStr>(p->value))
+        {
+            Serial.printf_P(PSTR("%s:\t%s\n"), p->key, std::get<configStr>(p->value).str);
+        }
+        else if (std::holds_alternative<int>(p->value))
+        {
+            Serial.printf_P(PSTR("%s:\t%d\n"), p->key, std::get<int>(p->value));
+        }
+        else
+        {
+            Serial.printf_P(PSTR("%s:\t%d\n"), p->key, std::get<bool>(p->value));
+        }
+    }
+}
+
+void userSettings::toFile(Print &file)
+{
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        if (std::holds_alternative<configStr>(p->value))
+        {
+            file.printf_P(PSTR("%s,,%s\n"), p->key, std::get<configStr>(p->value).str);
+        }
+        else if (std::holds_alternative<int>(p->value))
+        {
+            file.printf_P(PSTR("%s,,%d\n"), p->key, std::get<int>(p->value));
+#ifdef ESP8266
+            /* === remove legacy support as has been over a year
+            // Also save selected values under their old (v1.9.x and older) keynames
+            // Just-in-case user uploads back-level firmware.
+            if (strcmp_P(p->key, cfg_GDOSecurityType) == 0)
+                file.printf_P(PSTR("gdoSecurityType,,%d\n"), std::get<int>(p->value));
+            else if (strcmp_P(p->key, cfg_TTCseconds) == 0)
+                file.printf_P(PSTR("TTCdelay,,%d\n"), std::get<int>(p->value));
+            else if (strcmp_P(p->key, cfg_LEDidle) == 0)
+                file.printf_P(PSTR("ledIdleState,,%d\n"), std::get<int>(p->value));
+            */
+#endif
+        }
+        else
+        {
+            file.printf_P(PSTR("%s,,%d\n"), p->key, std::get<bool>(p->value));
+
+#ifdef ESP8266
+            /* === remove legacy support as has been over a year
+            // Also save selected values under their old (v1.9.x and older) keynames
+            // Just-in-case user uploads back-level firmware.
+            if (strcmp_P(p->key, cfg_passwordRequired) == 0)
+                file.printf_P(PSTR("wwwPWrequired,,%d\n"), std::get<bool>(p->value));
+            */
+#endif
+        }
+    }
+}
+
+#ifdef ESP8266
+// On ESP8266 we save settings to a file on LittleFS.
+void userSettings::save()
+{
+    // Avoid unnecessary flash writes, only save if a setting has changed since the
+    // last load() or save(), or if the config file does not exist yet.
+    if (!dirty && LittleFS.exists(cfg_configFile))
+    {
+        ESP_LOGD(TAG, "User configuration unchanged, not writing to file: %s", cfg_configFile);
+        return;
+    }
+    ESP_LOGD(TAG, "Writing user configuration to file: %s", cfg_configFile);
+    // Atomic write: write to temp file first, then rename
+    String tempFile = cfg_configFile + String(".tmp");
+    File file = LittleFS.open(tempFile, "w");
+    if (!file)
+    {
+        ESP_LOGE(TAG, "Failed to open temp config file for writing: %s", tempFile.c_str());
+        return;
+    }
+    toFile(file);
+    file.close();
+
+    // Atomic operation: rename temp file to final file. LittleFS rename replaces an existing
+    // file atomically, so do not remove it first. A power loss between a remove and the
+    // rename would leave no config file at all.
+    if (!LittleFS.rename(tempFile, cfg_configFile))
+    {
+        ESP_LOGE(TAG, "Failed to rename temp config file to final: %s -> %s", tempFile.c_str(), cfg_configFile);
+        LittleFS.remove(tempFile); // Clean up temp file
+        return;
+    }
+    dirty = false;
+}
+
+void userSettings::load()
+{
+    ESP_LOGI(TAG, "Read user configuration from file: %s", cfg_configFile);
+    File file = LittleFS.open(cfg_configFile, "r");
+    if (!file)
+        return;
+    while (file.available())
+    {
+        String line = file.readStringUntil('\n');
+        const char *key = line.c_str();
+        char *type = strchr(key, ',');
+        if (!type)
+        {
+            ESP_LOGW(TAG, "Malformed config line, skipping: %s", key);
+            continue;
+        }
+        *type++ = 0;
+        char *value = strchr(type, ',');
+        if (!value)
+        {
+            ESP_LOGW(TAG, "Malformed config line, missing value: %s", key);
+            continue;
+        }
+        *value++ = 0;
+        /* === remove legacy support as has been over a year
+        // one-time conversion of legacy (v1.9.x and older) into current keynames.
+        if (!strcmp(key, "wifiSettingsChanged"))
+            set(cfg_wifiChanged, value);
+        else if (!strcmp(key, "IPaddress"))
+            set(cfg_localIP, value);
+        else if (!strcmp(key, "IPnetmask"))
+            set(cfg_subnetMask, value);
+        else if (!strcmp(key, "IPgateway"))
+            set(cfg_gatewayIP, value);
+        else if (!strcmp(key, "IPnameserver"))
+            set(cfg_nameserverIP, value);
+        else if (!strcmp(key, "wwwPWrequired"))
+            set(cfg_passwordRequired, value);
+        else if (!strcmp(key, "gdoSecurityType"))
+            set(cfg_GDOSecurityType, value);
+        else if (!strcmp(key, "TTCdelay"))
+            set(cfg_TTCseconds, value);
+        else if (!strcmp(key, "ledIdleState"))
+            set(cfg_LEDidle, value);
+        else
+        */
+        set(key, value);
+    }
+    file.close();
+    // Settings now match what is in the file, nothing to save.
+    dirty = false;
+    return;
+}
+
+void userSettings::erase()
+{
+    if (LittleFS.exists(cfg_configFile))
+    {
+        LittleFS.remove(cfg_configFile);
+    }
+    ESP_LOGI(TAG, "Config file erased");
+}
+#else
+// On ESP32 we save settings to nvram.
+void userSettings::save()
+{
+    ESP_LOGI(TAG, "Writing user configuration to NVRAM");
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        if (std::holds_alternative<configStr>(p->value))
+        {
+            nvRam->write(p->key, std::get<configStr>(p->value).str);
+        }
+        else if (std::holds_alternative<int>(p->value))
+        {
+            nvRam->write(p->key, std::get<int>(p->value));
+        }
+        else
+        {
+            nvRam->write(p->key, std::get<bool>(p->value) ? 1 : 0);
+        }
+    }
+}
+
+void userSettings::load()
+{
+    nvs_stats_t nvs_stats;
+    nvs_get_stats(NULL, &nvs_stats);
+    ESP_LOGI(TAG, "NVRAM Used Entries: (%lu), Free Entries: (%lu), Total Entries: (%lu), Namespace Count: (%lu)",
+             nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
+    ESP_LOGI(TAG, "Read user configuration from NVRAM");
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        if (std::holds_alternative<configStr>(p->value))
+        {
+            char *str = std::get<configStr>(p->value).str;
+            size_t max = std::get<configStr>(p->value).max;
+            strlcpy(str, nvRam->read(p->key, str).c_str(), max);
+        }
+        else if (std::holds_alternative<int>(p->value))
+        {
+            p->value = (int)nvRam->read(p->key, std::get<int>(p->value));
+        }
+        else
+        {
+            p->value = (bool)(nvRam->read(p->key, std::get<bool>(p->value) ? 1 : 0) != 0);
+        }
+    }
+}
+#endif
+
+std::variant<bool, int, configStr> userSettings::get(const std::string &key)
+{
+    configSetting *setting = getDetail(key);
+    if (!setting)
+    {
+        ESP_LOGW(TAG, "Attempt to get value for unknown key ignored: %s", key.c_str());
+        return false; // Return a default value (false) for unknown keys
+    }
+    return setting->value;
+}
+
+configSetting *userSettings::getDetail(const std::string &key)
+{
+    // Keeping things simple with a linear search, since the number of settings is small and
+    // the array cannot be assumed to be sorted. We are avoiding C++ std::map to reduce memory use.
+    configSetting *p = settings;
+    for (size_t i = 0; i < nSettings; ++i, ++p)
+    {
+        if (strcmp_P(key.c_str(), p->key) == 0)
+            return p;
+    }
+    ESP_LOGW(TAG, "Attempt to get details for unknown key ignored: %s", key.c_str());
+    return nullptr; // Return nullptr for unknown keys
+}
+
+bool userSettings::set(const std::string &key, const bool value)
+{
+    bool rc = false;
+    TAKE_MUTEX();
+    configSetting *setting = getDetail(key);
+    if (setting)
+    {
+        if (std::holds_alternative<bool>(setting->value))
+        {
+            dirty = dirty || (std::get<bool>(setting->value) != value);
+            setting->value = value;
+#ifndef ESP8266
+            nvRam->write(key, value ? 1 : 0);
+#endif
+            rc = true;
+        }
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Attempt to set boolean for unknown key ignored: %s = %s", key.c_str(), value ? "true" : "false");
+    }
+    GIVE_MUTEX();
+    return rc;
+}
+
+bool userSettings::set(const std::string &key, const int value)
+{
+    bool rc = false;
+    TAKE_MUTEX();
+    configSetting *setting = getDetail(key);
+    if (setting)
+    {
+        if (std::holds_alternative<int>(setting->value))
+        {
+            dirty = dirty || (std::get<int>(setting->value) != value);
+            setting->value = value;
+#ifndef ESP8266
+            nvRam->write(key, value);
+#endif
+            rc = true;
+        }
+        else if (std::holds_alternative<bool>(setting->value))
+        {
+            dirty = dirty || (std::get<bool>(setting->value) != (value != 0));
+            setting->value = (value != 0);
+#ifndef ESP8266
+            nvRam->write(key, value ? 1 : 0);
+#endif
+            rc = true;
+        }
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Attempt to set integer for unknown key ignored: %s = %d", key.c_str(), value);
+    }
+    GIVE_MUTEX();
+    return rc;
+}
+
+bool userSettings::set(const std::string &key, const char *value)
+{
+    bool rc = false;
+    TAKE_MUTEX();
+    configSetting *setting = getDetail(key);
+    if (setting)
+    {
+        if (std::holds_alternative<configStr>(setting->value))
+        {
+            char *p = std::get<configStr>(setting->value).str;
+            size_t max = std::get<configStr>(setting->value).max;
+            // ESP_LOGD(TAG, "Set: %20s = %s", key.c_str(), value);
+            // Compare only what fits in the buffer, strlcpy() truncates to max - 1 characters.
+            dirty = dirty || (strncmp(p, value, max - 1) != 0);
+            strlcpy(p, value, max);
+#ifndef ESP8266
+            nvRam->write(key, value);
+#endif
+            rc = true;
+        }
+        else if (std::holds_alternative<bool>(setting->value))
+        {
+            bool newValue = (!strcmp(value, "true")) || (atoi(value) != 0);
+            dirty = dirty || (std::get<bool>(setting->value) != newValue);
+            setting->value = newValue;
+            // ESP_LOGD(TAG, "Set: %20s = %s", key.c_str(), std::get<bool>(setting->value) ? "true" : "false");
+#ifndef ESP8266
+            nvRam->write(key, std::get<bool>(setting->value) ? 1 : 0);
+#endif
+            rc = true;
+        }
+        else if (std::holds_alternative<int>(setting->value))
+        {
+            int newValue = atoi(value);
+            dirty = dirty || (std::get<int>(setting->value) != newValue);
+            setting->value = newValue;
+            // ESP_LOGD(TAG, "Set: %20s = %d", key.c_str(), std::get<int>(setting->value));
+#ifndef ESP8266
+            nvRam->write(key, atoi(value));
+#endif
+            rc = true;
+        }
+    }
+    else
+    {
+        ESP_LOGW(TAG, "Attempt to set string for unknown key ignored: %s = %s", key.c_str(), value);
+    }
+    GIVE_MUTEX();
+    return rc;
+}
+
+#ifdef ESP8266
+/****************************************************************************
+ * No NVRAM on ESP8266 so just use simple read/write from files
+ */
+uint32_t read_int_from_file(const char *filename, uint32_t defaultValue)
+{
+    // set to default value
+    uint32_t value = defaultValue;
+    File file = LittleFS.open(filename, "r");
+    if (file)
+    {
+        value = file.parseInt();
+        file.close();
+    }
+    return value;
+}
+
+void write_int_to_file(const char *filename, uint32_t value)
+{
+    File file = LittleFS.open(filename, "w");
+    ESP_LOGD(TAG, "writing %lu to file %s", value, filename);
+    file.print(value);
+    file.close();
+}
+
+bool read_blob_from_file(const char *filename, void *value, size_t size)
+{
+    File file = LittleFS.open(filename, "r");
+    if (file)
+    {
+        file.read((uint8_t *)value, size);
+        file.close();
+        return true;
+    }
+    return false; // file does not exist?
+}
+
+void write_blob_to_file(const char *filename, const void *value, size_t size)
+{
+    File file = LittleFS.open(filename, "w");
+    ESP_LOGD(TAG, "writing blob of size %d to file %s", size, filename);
+    file.write((uint8_t *)value, size);
+    file.close();
+}
+
+void delete_file(const char *filename)
+{
+    LittleFS.remove(filename);
+}
+#else
+/****************************************************************************
+ * NVRAM class
+ */
+nvRamClass::nvRamClass()
+{
+    ESP_LOGI(TAG, "Constructor for NVRAM class");
+    // Initialize non volatile ram
+    // We use this sparingly, most settings are saved in file system initialized below.
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+    err = nvs_open("ratgdo", NVS_READWRITE, &nvHandle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        nvHandle = 0;
+    }
+}
+
+void nvRamClass::checkStats()
+{
+    nvs_stats_t nvs_stats;
+    if (esp_err_t err = nvs_get_stats(NULL, &nvs_stats) == ESP_OK)
+    {
+        ESP_LOGI(TAG, "NVRAM Stats... UsedEntries = (%lu), FreeEntries = (%lu), TotalEntries = (%lu), Count = (%lu)\n",
+                 nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries, nvs_stats.namespace_count);
+    }
+    else
+    {
+        ESP_LOGE(TAG, "Error return from nvs_get_stats: %d", err);
+    }
+}
+
+int32_t nvRamClass::read(const std::string &constKey, const int32_t dflt)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    int32_t value = dflt;
+    esp_err_t err = nvs_get_i32(nvHandle, key.c_str(), &value);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND)
+    {
+        ESP_LOGE(TAG, "NVRAM get error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+    }
+    return value;
+}
+
+std::string nvRamClass::read(const std::string &constKey, const char *dflt)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    std::string value(dflt);
+    size_t len;
+    esp_err_t err = nvs_get_str(nvHandle, key.c_str(), NULL, &len);
+    if (err == ESP_OK)
+    {
+        char *buf = static_cast<char *>(malloc(len));
+        if (nvs_get_str(nvHandle, key.c_str(), buf, &len) == ESP_OK)
+        {
+            value = buf;
+        }
+        free(buf);
+    }
+    else if (err != ESP_ERR_NVS_NOT_FOUND)
+    {
+        ESP_LOGE(TAG, "NVRAM get error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+    }
+    return value;
+}
+
+bool nvRamClass::write(const std::string &constKey, const int32_t value, bool commit)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    esp_err_t err = nvs_set_i32(nvHandle, key.c_str(), value);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM set error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+        return false;
+    }
+    if (commit)
+    {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvHandle));
+    }
+    return true;
+}
+
+bool nvRamClass::readBlob(const std::string &constKey, void *value, size_t size)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    esp_err_t err = nvs_get_blob(nvHandle, key.c_str(), value, &size);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM get error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+        return false;
+    }
+    return true;
+}
+
+bool nvRamClass::writeBlob(const std::string &constKey, const void *value, size_t size, bool commit)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    esp_err_t err = nvs_set_blob(nvHandle, key.c_str(), value, size);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM set error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+        return false;
+    }
+    if (commit)
+    {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvHandle));
+    }
+    return true;
+}
+
+bool nvRamClass::write(const std::string &constKey, const char *value, bool commit)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    esp_err_t err = nvs_set_str(nvHandle, key.c_str(), value);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM set error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+        return false;
+    }
+    if (commit)
+    {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvHandle));
+    }
+    return true;
+}
+
+bool nvRamClass::erase(const std::string &constKey)
+{
+    std::string key = constKey;
+    if (key.length() >= NVS_KEY_NAME_MAX_SIZE)
+        key.resize(NVS_KEY_NAME_MAX_SIZE - 1); // allow for null terminator
+
+    esp_err_t err = nvs_erase_key(nvHandle, key.c_str());
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM erase error for: %s (%s)", key.c_str(), esp_err_to_name(err));
+        return false;
+    }
+    ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvHandle));
+    return true;
+}
+
+void nvRamClass::erase()
+{
+    esp_err_t err = nvs_erase_all(nvHandle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(TAG, "NVRAM erase_all error: %s", esp_err_to_name(err));
+        return;
+    }
+    ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvHandle));
+    return;
+}
+#endif

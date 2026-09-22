@@ -1,0 +1,15 @@
+.ccls
+.cache
+.ccls-cache
+.clang_complete
+.gcc-flags.json
+.pio
+.pioenvs
+.piolibdeps
+compile_commands.json
+__pycache__
+.DS_Store
+._*
+.vscode
+src/www/build
+.vscode/*
