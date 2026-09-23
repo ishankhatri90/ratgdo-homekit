@@ -3,22 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Install ESPHome on a RATGDO v2.5 ESP8266 board with 1 MB flash. Choose Security+ 2.0 or Security+ 1.0 for Home Assistant.">
+  <meta name="description" content="Install ESPHome on the RATGDO Slim aftermarket ESP8266 garage-door controller with 1 MB flash.">
   <meta name="color-scheme" content="light dark">
-  <title>RATGDO · ESPHome firmware installer</title>
+  <title>RATGDO Slim · ESPHome firmware installer</title>
   <link rel="stylesheet" href="installer.css">
   <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
   <script src="analytics.js" defer></script>
 </head>
 <body>
-  <header><a class="brand" href="./">RATGDO <span>/ ESPHOME</span></a><nav class="header-links" aria-label="Site links"><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
+  <header><a class="brand" href="./">RATGDO SLIM <span>/ ESPHOME</span></a><nav class="header-links" aria-label="Site links"><a href="./#hardware">Slim hardware</a><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
   <main>
     <section class="intro" aria-labelledby="heading">
-      <p class="eyebrow">THE ORIGINAL BOARD. CONNECTED TO HOME ASSISTANT.</p>
-      <h1 id="heading">Your garage.<br><span>Your automations.</span></h1>
-      <p class="lead">Install ESPHome for Home Assistant on your original RATGDO v2.5-series ESP8266 board with 1 MB flash.</p>
+      <p class="eyebrow">AFTERMARKET RATGDO ALTERNATIVE · HOME ASSISTANT</p>
+      <h1 id="heading">Automate your<br><span>RATGDO Slim.</span></h1>
+      <p class="lead">Install ESPHome for Home Assistant on the Slim ESP8266 garage-door controller with 1 MB flash—local control with no cloud subscription.</p>
       <nav class="firmware-nav" aria-label="Firmware choice"><a href="./">HomeKit</a><a href="esphome.html" aria-current="page">ESPHome</a></nav>
-      <div class="tags"><span>RATGDO v2.5 series</span><span>ESP8266EX</span><span>1 MB flash</span></div>
+      <div class="tags"><span>Slim v1.00 / v2.00</span><span>ESP8266 D1 Mini</span><span>1 MB flash</span><span>USB-C</span></div>
+      <aside class="aftermarket-note"><strong>Independent aftermarket hardware</strong><span>RATGDO Slim is an aftermarket alternative for the open-source RATGDO ecosystem. It is not an official RATGDO or ESPHome product.</span></aside>
       <div class="notice"><strong>Switching from HomeKit?</strong>Installing ESPHome replaces the HomeKit firmware. Choose erase during installation, then set up Wi-Fi again. ESPHome connects to Home Assistant; the HomeKit setup code on our other installer page does not apply.</div>
       <section class="pairing" aria-labelledby="after-install">
         <p class="eyebrow">AFTER INSTALL</p><h2 id="after-install">Connect to Home Assistant.</h2>
@@ -30,7 +31,7 @@
       <p class="eyebrow">ESPHOME · SELECT YOUR OPENER PROTOCOL</p>
       <h2 id="install-heading">Choose before connecting.</h2>
       <p>Connect with a USB data cable, close other serial monitors, then use the matching installer below. Desktop Chrome or Edge recommended.</p>
-      <p>These official <strong>v2.5 D1 Mini Lite</strong> builds use the v2.5 pin mapping and 1 MB flash configuration. They are not for RATGDO32, Disco, or v2.0 boards. No encoder configuration is included.</p>
+      <p>These official <strong>v2.5 D1 Mini Lite</strong> builds match the Slim board’s v2.5 pin mapping and 1 MB flash configuration. They are not for RATGDO32, Disco, or v2.0 boards. No encoder configuration is included.</p>
       <article class="protocol-card"><h3>Security+ 2.0</h3><p>Round yellow learn button. Excludes jackshaft models 8500/RJ020 and 8500C/RJ020C; use Security+ 1.0 for those.</p>
         <esp-web-install-button manifest="manifest-esphome-secplus2.json"><button slot="activate" type="button" data-install-counter="install-esphome-secplus2-1mb.txt">Install ESPHome · Security+ 2.0 →</button><p slot="unsupported" class="notice">Use desktop Chrome or Edge for USB flashing, or download the firmware below.</p><p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p></esp-web-install-button>
         <p class="loading">Loading USB installer… You can also download the firmware below.</p><a class="download" href="https://github.com/ishankhatri90/ratgdo-homekit/releases/download/v2.2.5-1mb/esphome-ratgdo-v25-1mb-secplus2.bin">Download Security+ 2.0 .bin · 482,912 bytes ↓</a>

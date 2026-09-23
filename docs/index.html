@@ -3,22 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Install RATGDO HomeKit 2.2.5 on an original v2.5-series ESP8266 board with 1 MB flash, directly from your browser.">
+  <meta name="description" content="Install HomeKit firmware on the RATGDO Slim aftermarket ESP8266 garage-door controller with 1 MB flash.">
   <meta name="color-scheme" content="light dark">
-  <title>RATGDO · HomeKit firmware installer</title>
+  <title>RATGDO Slim · HomeKit firmware installer</title>
   <link rel="stylesheet" href="installer.css">
   <script type="module" src="https://unpkg.com/esp-web-tools@10.1.0/dist/web/install-button.js?module"></script>
   <script src="analytics.js" defer></script>
 </head>
 <body>
-  <header><a class="brand" href="./">RATGDO <span>/ HOMEKIT</span></a><nav class="header-links" aria-label="Site links"><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
+  <header><a class="brand" href="./">RATGDO SLIM <span>/ HOMEKIT</span></a><nav class="header-links" aria-label="Site links"><a href="#hardware">Slim hardware</a><a href="analytics.html">Install counts</a><a href="legal.html">Licenses &amp; source</a><a href="https://github.com/ishankhatri90/ratgdo-homekit">GitHub ↗</a></nav></header>
   <main>
     <section class="intro" aria-labelledby="heading">
-      <p class="eyebrow">THE ORIGINAL BOARD. READY FOR HOMEKIT.</p>
-      <h1 id="heading">A smarter garage.<br><span>One USB connection.</span></h1>
-      <p class="lead">Install HomeKit firmware on your RATGDO directly from your browser. Connect your board, choose its USB port, and let the installer handle the rest.</p>
+      <p class="eyebrow">AFTERMARKET RATGDO ALTERNATIVE · LOCAL CONTROL</p>
+      <h1 id="heading">Flash your<br><span>RATGDO Slim.</span></h1>
+      <p class="lead">Install native HomeKit firmware on the Slim ESP8266 garage-door controller directly from your browser—local control, no cloud, and no subscription.</p>
       <nav class="firmware-nav" aria-label="Firmware choice"><a href="./" aria-current="page">HomeKit</a><a href="esphome.html">ESPHome</a></nav>
-      <div class="tags"><span>RATGDO v2.5 series</span><span>ESP8266EX</span><span>1 MB flash</span></div>
+      <div class="tags"><span>Slim v1.00 / v2.00</span><span>ESP8266 D1 Mini</span><span>1 MB flash</span><span>USB-C</span></div>
+      <aside class="aftermarket-note"><strong>Independent aftermarket hardware</strong><span>RATGDO Slim is an aftermarket alternative designed for the open-source RATGDO ecosystem. It is not an official RATGDO product and is not endorsed by the upstream projects.</span></aside>
       <section id="homekit" class="pairing" aria-labelledby="pairing-heading" tabindex="-1">
         <p class="eyebrow">AFTER INSTALL · ADD TO APPLE HOME</p>
         <h2 id="pairing-heading">Your HomeKit setup code</h2>
@@ -38,7 +39,7 @@
     <section class="installer" aria-labelledby="install-heading">
       <div class="card-top"><span class="eyebrow">FIRMWARE INSTALLER</span><span class="version">v2.2.5</span></div>
       <h2 id="install-heading">Connect. Install. Pair.</h2>
-      <p>For the original RATGDO v2.5-series ESP8266 board with <strong>1 MB (1024 KB)</strong> flash. Not compatible with RATGDO32 or RATGDO32 Disco.</p>
+      <p>For RATGDO Slim v1.00 and v2.00 with a socketed <strong>ESP8266 D1 Mini and 1 MB (1024 KB) flash</strong>. The firmware uses the RATGDO v2.5 pin layout. It is not for RATGDO32 or RATGDO32 Disco.</p>
       <ol>
         <li><strong>Connect over USB</strong><span>Use a data-capable cable. Close serial monitors and other apps using the board.</span></li>
         <li><strong>Select the board’s serial port</strong><span>Click Connect below and choose your USB serial device, often labeled CH340.</span></li>
@@ -46,7 +47,7 @@
       </ol>
       <div class="notice"><strong>Changing from a 4 MB layout?</strong> Choose the erase option during installation for a clean setup. Erasing removes saved Wi-Fi settings and HomeKit pairing; you will need to configure them again.</div>
       <esp-web-install-button manifest="manifest-1mb.json">
-        <button slot="activate" type="button" data-install-counter="install-homekit-2.2.5-1mb.txt">Connect to RATGDO <span aria-hidden="true">→</span></button>
+        <button slot="activate" type="button" data-install-counter="install-homekit-2.2.5-1mb.txt">Connect to RATGDO Slim <span aria-hidden="true">→</span></button>
         <p slot="unsupported" class="notice">USB flashing is unavailable in this browser. Open this page in desktop Chrome or Edge on a computer with a USB port. You can still download the firmware below.</p>
         <p slot="not-allowed" class="notice">Open this page over HTTPS to enable USB flashing.</p>
       </esp-web-install-button>
@@ -57,9 +58,17 @@
       <a class="download" href="https://github.com/ishankhatri90/ratgdo-homekit/releases/download/v2.2.5-1mb/ratgdo-homekit-2.2.5-esp8266-1mb.bin">Download the .bin instead ↓</a>
       <aside class="license-panel" aria-label="Firmware license and source"><strong>License: GNU GPLv3</strong><span>This download includes a modified RATGDO HomeKit build. The license, complete source, build instructions, attribution, and warranty notice are available on the <a href="legal.html">Licenses &amp; source page</a>.</span></aside>
     </section>
+    <section id="hardware" class="slim-hardware" aria-labelledby="hardware-heading">
+      <div class="section-heading"><p class="eyebrow">RATGDO SLIM HARDWARE</p><h2 id="hardware-heading">Choose the board you have.</h2><p>Both Slim versions use the same firmware. Their external-antenna hardware differs.</p></div>
+      <article class="slim-card"><span class="model-badge">v1.00</span><h3>On-board antenna + SMA port</h3><p>Attach any compatible SMA antenna directly. No ESP module resistor modification is required.</p></article>
+      <article class="slim-card featured"><span class="model-badge">v2.00</span><h3>SMA-to-IPEX + 2 dBi antenna</h3><p>Includes an external 2 dBi antenna and feeder. The antenna path works without modifying the ESP module.</p></article>
+      <article class="slim-card hardware-common"><span class="model-badge">BOTH VERSIONS</span><h3>Built for serviceability</h3><p>USB-C power, a socketed replaceable ESP8266 D1 Mini, a three-terminal push connector, status LEDs, and a vented enclosure.</p></article>
+      <article class="slim-card hardware-common"><span class="model-badge">OPENER SUPPORT</span><h3>Check the learn-button color</h3><p><strong>Security+ 2.0:</strong> round yellow learn button. Jackshaft models 8500/RJ020 and 8500C/RJ020C are excluded. <strong>Security+ 1.0:</strong> purple, brown, orange, or red learn button; support is experimental and may vary by opener or wall panel.</p></article>
+      <aside class="wiring-warning"><strong>Wire before applying power.</strong><p>Incorrect wiring can damage the Slim board or garage-door opener. Turn opener power off, verify the terminal labels, and then connect:</p><div class="wire-map"><span><b class="wire-red">RED</b> Wall control</span><span><b class="wire-white">WHITE</b> Ground</span><span><b class="wire-black">BLACK</b> Obstruction / control</span></div><p class="helper">Use a regulated 5 V supply and the cable specified by your Slim seller. The provided listing says USB-A to USB-C; USB-C to USB-C is not supported by this hardware.</p></aside>
+    </section>
     <section class="details" aria-label="Firmware details and help">
       <article><p class="eyebrow">BUILT FOR 1 MB</p><h2>The right fit for your board.</h2><p>This build uses a 1 MB flash layout with 64 KB reserved for LittleFS. The exact binary has been flashed over USB and verified by esptool.</p><dl><div><dt>Firmware</dt><dd>HomeKit 2.2.5</dd></div><div><dt>Binary size</dt><dd>800,656 bytes</dd></div><div><dt>Chip family</dt><dd>ESP8266</dd></div></dl><details><summary>SHA-256 checksum</summary><code>3caf757b05084d903917632bf4a76868b1345cb6ab8e8542fde2b7db3e6959ea</code></details></article>
-      <article><p class="eyebrow">NEED A HAND?</p><h2>Connection checklist.</h2><details><summary>The board is missing from the port list</summary><p>Try another USB data cable and a direct USB port. CH340 boards may need the <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html">manufacturer’s Windows driver</a>.</p></details><details><summary>The port is busy or connection fails</summary><p>Close PlatformIO’s serial monitor, Arduino IDE serial monitors, and other browser tabs connected to the board. Unplug and reconnect USB, then try again.</p></details><details><summary>Can this identify my exact board model?</summary><p>The installer checks the ESP chip family, but cannot confirm the RATGDO board revision or wiring. Check that your board is an original v2.5-series ESP8266 model with 1 MB flash before installing.</p></details><p><a href="https://github.com/ishankhatri90/ratgdo-homekit/releases/tag/v2.2.5-1mb">Release notes and source code ↗</a></p></article>
+      <article><p class="eyebrow">NEED A HAND?</p><h2>Connection checklist.</h2><details><summary>The board is missing from the port list</summary><p>Try another USB data cable and a direct USB port. Slim boards using a CH340 USB-to-serial chip may need the <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html">manufacturer’s Windows driver</a>.</p></details><details><summary>The port is busy or connection fails</summary><p>Close PlatformIO’s serial monitor, Arduino IDE serial monitors, and other browser tabs connected to the board. Unplug and reconnect USB, then try again.</p></details><details><summary>Can this identify my exact board?</summary><p>The installer confirms the ESP8266 chip family but cannot identify the carrier PCB, flash capacity, wiring, or Slim revision. Confirm you have a Slim v1.00 or v2.00 with a 1 MB D1 Mini before installing.</p></details><p><a href="https://github.com/ishankhatri90/ratgdo-homekit/releases/tag/v2.2.5-1mb">Release notes and source code ↗</a></p></article>
     </section>
   </main>
   <footer><span>Independent community build · <a href="legal.html">GPLv3, source &amp; attribution</a></span><span>USB installer powered by <a href="https://esphome.github.io/esp-web-tools/">ESP Web Tools</a></span></footer>
