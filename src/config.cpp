@@ -119,7 +119,11 @@ static configSetting settings_defaults[] PROGMEM = {
     {cfg_wwwUsername, false, false, (configStr){sizeof(usernameBuf), usernameBuf}, NULL},
     //  Credentials are MD5 Hash... server.credentialHash(username, realm, "password");
     {cfg_wwwCredentials, false, false, (configStr){sizeof(credentialsBuf), credentialsBuf}, NULL},
+#ifdef RATGDO_SECPLUS1_DEFAULT
+    {cfg_GDOSecurityType, true, false, 1, helperGDOSecurityType}, // call fn to reset door
+#else
     {cfg_GDOSecurityType, true, false, 2, helperGDOSecurityType}, // call fn to reset door
+#endif
     {cfg_TTCseconds, false, false, 5, NULL},
     {cfg_TTClight, false, false, true, NULL},
     {cfg_rebootSeconds, true, true, 0, NULL},

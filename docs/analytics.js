@@ -24,9 +24,13 @@ const analyticsRoot = document.querySelector("[data-analytics-dashboard]");
 if (analyticsRoot) {
   const number = new Intl.NumberFormat();
   const tracked = {
-    "homekit": {
+    "homekit-secplus2": {
       attempt: "install-homekit-2.2.5-1mb.txt",
       download: "ratgdo-homekit-2.2.5-esp8266-1mb.bin",
+    },
+    "homekit-secplus1": {
+      attempt: "install-homekit-secplus1-1mb.txt",
+      download: "ratgdo-homekit-2.2.5-esp8266-1mb-secplus1.bin",
     },
     "esphome-secplus2": {
       attempt: "install-esphome-secplus2-1mb.txt",
