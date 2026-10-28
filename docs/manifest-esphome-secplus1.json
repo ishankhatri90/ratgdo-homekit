@@ -5,14 +5,14 @@
     {
       "parts": [
         {
-          "path": "firmware/esphome-ratgdo-v25-1mb-secplus1.bin",
+          "path": "firmware/esphome-ratgdo-v25-1mb-secplus1-captive.bin",
           "offset": 0
         }
       ],
       "chipFamily": "ESP8266"
     }
   ],
-  "name": "RATGDO ESPHome 1 MB - Security+ 1.0",
-  "version": "upstream 2026-09-21",
+  "name": "RATGDO ESPHome 1 MB - Security+ 1.0 (captive portal)",
+  "version": "v2.5 + captive portal",
   "home_assistant_domain": "esphome"
 }

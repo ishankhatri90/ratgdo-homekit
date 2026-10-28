@@ -66,5 +66,25 @@
     "container_digest": "sha256:959ef36e5ea97c8309429f0ba1405ddb2eead19019b81e6e9518e683dff5191c",
     "verification": "Hosted binary SHA-256 values exactly match the official successful build artifacts."
   },
-  "retrieved_utc": "2026-09-22T02:11:06.1310390Z"
+  "retrieved_utc": "2026-09-22T02:11:06.1310390Z",
+  "captive_portal_builds": [
+    {
+      "config": "esphome-captive/slim-v25-secplus2.yaml",
+      "source_commit": "7501d8070826c433aee114bb4c9c2e38195a5342",
+      "esphome_version": "2026.7.0",
+      "change": "Added captive_portal component only",
+      "path": "firmware/esphome-ratgdo-v25-1mb-secplus2-captive.bin",
+      "bytes": 493168,
+      "sha256": "322ee0c8556620948be0e2f35059cce08cc0e4c4e4d31eeb09ce6dfeb6d36c2f"
+    },
+    {
+      "config": "esphome-captive/slim-v25-secplus1.yaml",
+      "source_commit": "7501d8070826c433aee114bb4c9c2e38195a5342",
+      "esphome_version": "2026.7.0",
+      "change": "Added captive_portal component only",
+      "path": "firmware/esphome-ratgdo-v25-1mb-secplus1-captive.bin",
+      "bytes": 479568,
+      "sha256": "17f2176ffecea9e36d345b20dd18f3ed907c88a033fe363b01888e61add3f5e7"
+    }
+  ]
 }
